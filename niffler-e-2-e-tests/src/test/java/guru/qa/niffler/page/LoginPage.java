@@ -3,6 +3,7 @@ package guru.qa.niffler.page;
 import com.codeborne.selenide.SelenideElement;
 
 import static com.codeborne.selenide.Condition.text;
+import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 
 public class LoginPage {
@@ -18,8 +19,8 @@ public class LoginPage {
     }
 
     public void login(String username, String password) {
-        usernameInput.setValue(username);
-        passwordInput.setValue(password);
+        usernameInput.shouldBe(visible).setValue(username);
+        passwordInput.shouldBe(visible).setValue(password);
         submitButton.click();
     }
 

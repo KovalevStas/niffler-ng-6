@@ -14,16 +14,20 @@ public class LoginWebTest {
     void mainPageShouldBeDisplayedAfterSuccessLogin() {
         String username = faker.name().username();
         Selenide.open(CFG.frontUrl(), LoginPage.class)
-                .register()
-                .register(username, "123", "123").signInBtnClick().login(username, "123").checkHistory().checkStatistics();
+                .goToRegisterPage()
+                .fillRegisterPage(username, "123", "123")
+                .successSubmit()
+                .successLogin(username, "123")
+                .checkHistory()
+                .checkStatistics();
     }
 
     @Test
     void userShouldStayOnLoginPageAfterLoginWithBadCredentials() {
         String username = faker.name().username();
         Selenide.open(CFG.frontUrl(), LoginPage.class)
-                .register()
-                .register(username, "123", "123").signInBtnClick().login(username, "1234");
+                .goToRegisterPage()
+                .fillRegisterPage(username, "123", "123").successSubmit().login(username, "1234");
         new LoginPage().assertLoginErrorShow("Неверные учетные данные пользователя");
     }
 }

@@ -53,7 +53,8 @@ public class RegisterPage {
         return new LoginPage();
     }
 
-    public void submit() {
+    public RegisterPage submit() {
         submitButton.click();
+        return this;
     }
 }

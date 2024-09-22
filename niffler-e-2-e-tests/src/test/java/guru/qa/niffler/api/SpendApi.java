@@ -17,7 +17,7 @@ public interface SpendApi {
     Call<SpendJson> editSpend(@Body SpendJson spend);
 
     @GET("internal/spends/{id}")
-    Call<SpendJson> getSpend(@Path("id") String id, @Query("username") String username);
+    Call<SpendJson> getSpend(@Path("id") String id);
 
     @GET("internal/spends/all")
     Call<List<SpendJson>> getAllSpends(@Query("username") String username,

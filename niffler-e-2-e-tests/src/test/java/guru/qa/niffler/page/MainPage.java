@@ -15,7 +15,7 @@ public class MainPage {
     private final ElementsCollection tableRows = $("#spendings tbody").$$("tr");
     private final SelenideElement headerMenu = $("ul[role='menu']");
     private final SelenideElement history = $(withText("History of Spendings")).parent();
-    private final SelenideElement statistics = $(withText("History of Statistics")).parent();
+    private final SelenideElement statistics = $(withText("Statistics")).parent();
 
     public FriendsPage friendsPage() {
         header.$("button").click();
@@ -46,6 +46,12 @@ public class MainPage {
 
     public MainPage checkStatistics() {
         statistics.shouldBe(visible, Duration.ofSeconds(5));
+        return new MainPage();
+    }
+
+    public MainPage checkThatPageLoaded() {
+        checkStatistics();
+        checkHistory();
         return new MainPage();
     }
 
