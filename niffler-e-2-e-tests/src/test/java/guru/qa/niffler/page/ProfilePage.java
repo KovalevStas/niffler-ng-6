@@ -59,4 +59,9 @@ public class ProfilePage {
         categories.find(text(categoryName)).$("input[value='" + categoryName + "']").setValue(newCategoryName).pressEnter();
         return new ProfilePage();
     }
+
+    public ProfilePage clickShowArchivedBtn() {
+        showArchivedBtn.click();
+        return new ProfilePage();
+    }
 }
