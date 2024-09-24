@@ -5,12 +5,7 @@ import guru.qa.niffler.jupiter.annotation.Category;
 import guru.qa.niffler.jupiter.annotation.User;
 import guru.qa.niffler.model.CategoryJson;
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ParameterContext;
-import org.junit.jupiter.api.extension.ParameterResolutionException;
-import org.junit.jupiter.api.extension.ParameterResolver;
+import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.AnnotationSupport;
 
 import static guru.qa.niffler.utils.RandomDataUtils.randomCategoryName;
@@ -37,7 +32,7 @@ public class CategoryExtension implements
                                 categoryAnno.archived()
                         );
 
-                        CategoryJson created = spendApiClient.createCategory(category);
+                        CategoryJson created = spendApiClient.addCategories(category);
                         if (categoryAnno.archived()) {
                             CategoryJson archivedCategory = new CategoryJson(
                                     created.id(),
@@ -78,12 +73,5 @@ public class CategoryExtension implements
     @Override
     public CategoryJson resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
         return extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), CategoryJson.class);
-    }
-
-    @Override
-    public void afterTestExecution(ExtensionContext context) throws Exception {
-        CategoryJson categoryJson = context.getStore(CategoryExtension.NAMESPACE).get(context.getUniqueId(), CategoryJson.class);
-        if (!categoryJson.archived())
-            spendApiClient.updateCategory(new CategoryJson(categoryJson.id(), categoryJson.name(), categoryJson.username(), true));
     }
 }
