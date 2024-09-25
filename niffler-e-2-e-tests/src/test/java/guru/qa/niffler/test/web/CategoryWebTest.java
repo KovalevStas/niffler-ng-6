@@ -35,7 +35,7 @@ public class CategoryWebTest {
     @Test
     void activeCategoryShouldPresentInCategoriesList(CategoryJson category) {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
-                .successLogin(category.username(), "12345")
+                .successLogin("duck", "12345")
                 .goToProfile()
                 .IsCategoryCreated(category.name());
     }

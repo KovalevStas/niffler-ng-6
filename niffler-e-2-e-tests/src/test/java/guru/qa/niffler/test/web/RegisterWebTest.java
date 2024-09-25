@@ -1,16 +1,14 @@
 package guru.qa.niffler.test.web;
 
 import com.codeborne.selenide.Selenide;
-import com.github.javafaker.Faker;
 import guru.qa.niffler.config.Config;
 import guru.qa.niffler.page.LoginPage;
+import guru.qa.niffler.utils.RandomDataUtils;
 import org.junit.jupiter.api.Test;
 
 public class RegisterWebTest {
 
     private static final Config CFG = Config.getInstance();
-
-    Faker faker = new Faker();
 
     @Test
     void registerWithShortPassword() {
@@ -24,7 +22,7 @@ public class RegisterWebTest {
 
     @Test
     void shouldRegisterNewUser() {
-        String username = faker.name().username();
+        String username = RandomDataUtils.randomUsername();
         Selenide.open(CFG.frontUrl(), LoginPage.class)
                 .goToRegisterPage()
                 .fillRegisterPage(username, "123", "123")
@@ -33,7 +31,7 @@ public class RegisterWebTest {
 
     @Test
     void shouldNotRegisterUserWithExistingUsername() {
-        String username = faker.name().username();
+        String username = RandomDataUtils.randomUsername();
         Selenide.open(CFG.frontUrl(), LoginPage.class)
                 .goToRegisterPage()
                 .fillRegisterPage(username, "123", "123")
@@ -48,7 +46,7 @@ public class RegisterWebTest {
     void shouldShowErrorIfPasswordAndConfirmPasswordAreNotEqual() {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
                 .goToRegisterPage()
-                .fillRegisterPage(faker.name().username(), "123", "1234")
+                .fillRegisterPage(RandomDataUtils.randomUsername(), "123", "1234")
                 .submit()
                 .assertPasswordErrorShow("Passwords should be equal");
     }
