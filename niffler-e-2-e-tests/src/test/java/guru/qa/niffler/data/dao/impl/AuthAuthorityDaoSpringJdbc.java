@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.UUID;
 
 public class AuthAuthorityDaoSpringJdbc implements AuthAuthorityDao {
 
@@ -47,8 +48,9 @@ public class AuthAuthorityDaoSpringJdbc implements AuthAuthorityDao {
     public List<AuthorityEntity> findAll(String user_id) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.authJdbcUrl()));
         return jdbcTemplate.query(
-                "SELECT * FROM \"authority\" WHERE user_id = 'd95e43a0-823e-11ef-8b35-0242ac110002'",
-                AuthAuthorityRowMapper.instance
+                "SELECT * FROM \"authority\" WHERE user_id = ?",
+                AuthAuthorityRowMapper.instance,
+                UUID.fromString(user_id)
         );
     }
 }

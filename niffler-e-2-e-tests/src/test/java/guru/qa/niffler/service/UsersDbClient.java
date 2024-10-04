@@ -11,7 +11,6 @@ import guru.qa.niffler.data.entity.auth.AuthUserEntity;
 import guru.qa.niffler.data.entity.auth.Authority;
 import guru.qa.niffler.data.entity.auth.AuthorityEntity;
 import guru.qa.niffler.data.entity.userdata.UserEntity;
-import guru.qa.niffler.data.tpl.DataSources;
 import guru.qa.niffler.data.tpl.XaTransactionTemplate;
 import guru.qa.niffler.model.UserJson;
 import org.springframework.jdbc.support.JdbcTransactionManager;
@@ -22,6 +21,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
+import static guru.qa.niffler.data.tpl.DataSources.dataSource;
 
 
 public class UsersDbClient {
@@ -35,14 +36,55 @@ public class UsersDbClient {
 
     private final TransactionTemplate txTemplate = new TransactionTemplate(
             new JdbcTransactionManager(
-                    DataSources.dataSource(CFG.authJdbcUrl())
+                    dataSource(CFG.authJdbcUrl())
             )
     );
+
+/*    TransactionTemplate ChainedTemplate = new TransactionTemplate(
+            new ChainedTransactionManager(
+                    new JdbcTransactionManager(
+                            dataSource(CFG.authJdbcUrl())
+                    ),
+                    new JdbcTransactionManager(
+                            dataSource(CFG.userdataJdbcUrl())
+                    )
+            )
+    );*/
 
     private final XaTransactionTemplate xaTransactionTemplate = new XaTransactionTemplate(
             CFG.authJdbcUrl(),
             CFG.userdataJdbcUrl()
     );
+
+/*    public UserJson chainedCreateUser(UserJson user) {
+        return ChainedTemplate.execute(status -> {
+                    AuthUserEntity authUser = new AuthUserEntity();
+                    authUser.setUsername(user.username());
+                    authUser.setPassword(pe.encode("12345"));
+                    authUser.setEnabled(true);
+                    authUser.setAccountNonExpired(true);
+                    authUser.setAccountNonLocked(true);
+                    authUser.setCredentialsNonExpired(true);
+
+                    AuthUserEntity createdAuthUser = authUserDao.create(authUser);
+
+                    AuthorityEntity[] authorityEntities = Arrays.stream(Authority.values()).map(
+                            e -> {
+                                AuthorityEntity ae = new AuthorityEntity();
+                                ae.setUserId(createdAuthUser.getId());
+                                ae.setAuthority(e);
+                                return ae;
+                            }
+                    ).toArray(AuthorityEntity[]::new);
+
+                    authAuthorityDao.create(authorityEntities);
+                    return UserJson.fromEntity(
+                            udUserDao.create(UserEntity.fromJson(user)),
+                            null
+                    );
+                }
+        );
+    }*/
 
     public UserJson createUser(UserJson user) {
         return xaTransactionTemplate.execute(() -> {
@@ -75,10 +117,9 @@ public class UsersDbClient {
     }
 
     public void deleteUser(UserJson user) {
+        UserEntity userEntity = UserEntity.fromJson(user);
+        Optional<AuthUserEntity> authUserEntity = authUserDao.findByUsername(userEntity.getUsername());
         xaTransactionTemplate.execute(() -> {
-            UserEntity userEntity = UserEntity.fromJson(user);
-            udUserDao.delete(userEntity);
-            Optional<AuthUserEntity> authUserEntity = authUserDao.findByUsername(userEntity.getUsername());
             if (authUserEntity.isPresent()) {
                 List<AuthorityEntity> authorityList = authAuthorityDao.findAll(String.valueOf(authUserEntity.get().getId()));
                 if (!authorityList.isEmpty())
@@ -87,6 +128,8 @@ public class UsersDbClient {
                     }
                 authUserDao.delete(authUserEntity.get());
             }
+            userEntity.setUsername(null);
+            udUserDao.delete(userEntity);
             return null;
         });
     }

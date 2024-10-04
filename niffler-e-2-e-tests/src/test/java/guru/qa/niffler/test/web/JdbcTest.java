@@ -43,7 +43,7 @@ public class JdbcTest {
         UserJson user = usersDbClient.createUser(
                 new UserJson(
                         null,
-                        "valentin-4",
+                        "valentin-9",
                         null,
                         null,
                         null,
@@ -54,5 +54,41 @@ public class JdbcTest {
                 )
         );
         usersDbClient.deleteUser(user);
+    }
+
+    @Test
+    void chainedCreateTest() {
+        UsersDbClient usersDbClient = new UsersDbClient();
+        UserJson user = usersDbClient.createUser(
+                new UserJson(
+                        null,
+                        "valentin-11",
+                        null,
+                        null,
+                        null,
+                        CurrencyValues.RUB,
+                        null,
+                        null,
+                        null
+                )
+        );
+        usersDbClient.deleteUser(user);
+    }
+
+    @Test
+    void name() {
+        UsersDbClient usersDbClient = new UsersDbClient();
+        usersDbClient.deleteUser(new UserJson(
+                null,
+                "valentin-7",
+                null,
+                null,
+                null,
+                CurrencyValues.RUB,
+                null,
+                null,
+                null
+        ));
+
     }
 }
