@@ -14,7 +14,12 @@ public class AuthAuthorityDaoSpringJdbc implements AuthAuthorityDao {
 
   private static final Config CFG = Config.getInstance();
 
-  @Override
+    @Override
+    public void delete(AuthorityEntity authority) {
+
+    }
+
+    @Override
   public void create(AuthorityEntity... authority) {
     JdbcTemplate jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.authJdbcUrl()));
     jdbcTemplate.batchUpdate(
