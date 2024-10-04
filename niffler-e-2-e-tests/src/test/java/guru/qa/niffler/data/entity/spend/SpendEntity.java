@@ -20,6 +20,7 @@ public class SpendEntity implements Serializable {
     private Double amount;
     private String description;
     private CategoryEntity category;
+
     public static SpendEntity fromJson(SpendJson json) {
         SpendEntity se = new SpendEntity();
         se.setId(json.id());

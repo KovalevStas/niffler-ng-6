@@ -16,31 +16,37 @@ import java.util.Optional;
 
 public class SpendDbClient {
 
-  private static final Config CFG = Config.getInstance();
+    private static final Config CFG = Config.getInstance();
 
-  private final CategoryDao categoryDao = new CategoryDaoJdbc();
-  private final SpendDao spendDao = new SpendDaoJdbc();
+    private final CategoryDao categoryDao = new CategoryDaoJdbc();
+    private final SpendDao spendDao = new SpendDaoJdbc();
 
-  private final JdbcTransactionTemplate jdbcTxTemplate = new JdbcTransactionTemplate(
-      CFG.spendJdbcUrl()
-  );
-
-  public SpendJson createSpend(SpendJson spend) {
-    return jdbcTxTemplate.execute(() -> {
-          SpendEntity spendEntity = SpendEntity.fromJson(spend);
-          if (spendEntity.getCategory().getId() == null) {
-            CategoryEntity categoryEntity = categoryDao.create(spendEntity.getCategory());
-            spendEntity.setCategory(categoryEntity);
-          }
-          return SpendJson.fromEntity(
-              spendDao.create(spendEntity)
-          );
-        }
+    private final JdbcTransactionTemplate jdbcTxTemplate = new JdbcTransactionTemplate(
+            CFG.spendJdbcUrl()
     );
-  }
+
+    public SpendJson createSpend(SpendJson spend) {
+        return jdbcTxTemplate.execute(() -> {
+                    SpendEntity spendEntity = SpendEntity.fromJson(spend);
+                    if (spendEntity.getCategory().getId() == null) {
+                        CategoryEntity categoryEntity = categoryDao.create(spendEntity.getCategory());
+                        spendEntity.setCategory(categoryEntity);
+                    }
+                    return SpendJson.fromEntity(
+                            spendDao.create(spendEntity)
+                    );
+                }
+        );
+    }
+
     public CategoryJson createCategory(CategoryJson category) {
         CategoryEntity categoryEntity = CategoryEntity.fromJson(category);
         return CategoryJson.fromEntity(categoryDao.create(categoryEntity));
+    }
+
+    public void deleteSpend(SpendJson spend) {
+        SpendEntity spendEntity = SpendEntity.fromJson(spend);
+        spendDao.deleteSpend(spendEntity);
     }
 
     public void deleteCategory(CategoryJson category) {

@@ -25,8 +25,6 @@ public record UserJson(
         String photo,
         @JsonProperty("photoSmall")
         String photoSmall,
-        @JsonProperty("password")
-        String password,
         @JsonProperty("friendState")
         FriendState friendState) {
 

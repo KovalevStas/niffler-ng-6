@@ -29,11 +29,12 @@ public class JdbcTest {
                         CurrencyValues.RUB,
                         1000.0,
                         "spend-name-tx",
-                        null
+                        "duck"
                 )
         );
-
         System.out.println(spend);
+        spendDbClient.deleteSpend(spend);
+        spendDbClient.deleteCategory(spend.category());
     }
 
     @Test
@@ -49,10 +50,9 @@ public class JdbcTest {
                         CurrencyValues.RUB,
                         null,
                         null,
-                        null,
                         null
                 )
         );
-        System.out.println(user);
+        usersDbClient.deleteUser(user);
     }
 }

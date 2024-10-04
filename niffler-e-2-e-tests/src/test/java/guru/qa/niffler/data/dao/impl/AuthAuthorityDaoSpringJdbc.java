@@ -14,24 +14,19 @@ import java.util.List;
 
 public class AuthAuthorityDaoSpringJdbc implements AuthAuthorityDao {
 
-  private static final Config CFG = Config.getInstance();
+    private static final Config CFG = Config.getInstance();
 
     @Override
-    public void delete(AuthorityEntity authority) {
-
-    }
-
-    @Override
-  public void create(AuthorityEntity... authority) {
-    JdbcTemplate jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.authJdbcUrl()));
-    jdbcTemplate.batchUpdate(
-        "INSERT INTO authority (user_id, authority) VALUES (? , ?)",
-        new BatchPreparedStatementSetter() {
-          @Override
-          public void setValues(PreparedStatement ps, int i) throws SQLException {
-            ps.setObject(1, authority[i].getUserId());
-            ps.setString(2, authority[i].getAuthority().name());
-          }
+    public void create(AuthorityEntity... authority) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.authJdbcUrl()));
+        jdbcTemplate.batchUpdate(
+                "INSERT INTO \"authority\" (user_id, authority) VALUES (? , ?)",
+                new BatchPreparedStatementSetter() {
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        ps.setObject(1, authority[i].getUserId());
+                        ps.setString(2, authority[i].getAuthority().name());
+                    }
 
                     @Override
                     public int getBatchSize() {
@@ -42,12 +37,18 @@ public class AuthAuthorityDaoSpringJdbc implements AuthAuthorityDao {
     }
 
     @Override
+    public void delete(AuthorityEntity authority) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.authJdbcUrl()));
+        jdbcTemplate.update("DELETE FROM \"authority\" WHERE id = ?",
+                authority.getId());
+    }
+
+    @Override
     public List<AuthorityEntity> findAll(String user_id) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.authJdbcUrl()));
         return jdbcTemplate.query(
-                "SELECT * FROM \"authority\" WHERE user_id = ?",
-                AuthAuthorityRowMapper.instance,
-                user_id
+                "SELECT * FROM \"authority\" WHERE user_id = 'd95e43a0-823e-11ef-8b35-0242ac110002'",
+                AuthAuthorityRowMapper.instance
         );
     }
 }
