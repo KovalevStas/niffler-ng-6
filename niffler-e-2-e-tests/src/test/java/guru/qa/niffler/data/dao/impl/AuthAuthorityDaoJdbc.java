@@ -2,14 +2,17 @@ package guru.qa.niffler.data.dao.impl;
 
 import guru.qa.niffler.config.Config;
 import guru.qa.niffler.data.dao.AuthAuthorityDao;
+import guru.qa.niffler.data.entity.auth.Authority;
 import guru.qa.niffler.data.entity.auth.AuthorityEntity;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import static guru.qa.niffler.data.tpl.Connections.holder;
-import java.sql.*;
-import java.util.UUID;
 
 public class AuthAuthorityDaoJdbc implements AuthAuthorityDao {
 
@@ -48,5 +51,26 @@ public class AuthAuthorityDaoJdbc implements AuthAuthorityDao {
             throw new RuntimeException(e);
         }
     }
-
+    @Override
+    public List<AuthorityEntity> findAll(String user_id) {
+        try (PreparedStatement ps = holder(CFG.authJdbcUrl()).connection().prepareStatement(
+                "SELECT * FROM \"authority\" WHERE user_id = ?"
+        )) {
+            ps.setObject(1, user_id);
+            ps.execute();
+            try (ResultSet rs = ps.getResultSet()) {
+                List<AuthorityEntity> authorytyList = new ArrayList<>();
+                while (rs.next()) {
+                    AuthorityEntity result = new AuthorityEntity();
+                    result.setId(rs.getObject("id", UUID.class));
+                    result.setUserId(UUID.fromString(rs.getString("user_id")));
+                    result.setAuthority(Authority.valueOf(rs.getString("authority")));
+                    authorytyList.add(result);
+                }
+                return authorytyList;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
