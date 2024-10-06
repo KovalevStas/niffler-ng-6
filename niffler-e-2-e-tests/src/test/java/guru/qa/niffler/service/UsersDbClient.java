@@ -18,58 +18,56 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 
 
 public class UsersDbClient {
 
-  private static final Config CFG = Config.getInstance();
-  private static final PasswordEncoder pe = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    private static final Config CFG = Config.getInstance();
+    private static final PasswordEncoder pe = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
-  private final AuthUserRepository authUserRepository = new AuthUserRepositoryJdbc();
-  private final UdUserDao udUserDao = new UdUserDaoSpringJdbc();
+    private final AuthUserRepository authUserRepository = new AuthUserRepositoryJdbc();
+    private final UdUserDao udUserDao = new UdUserDaoSpringJdbc();
 
-  private final TransactionTemplate txTemplate = new TransactionTemplate(
-      new JdbcTransactionManager(
-          DataSources.dataSource(CFG.authJdbcUrl())
-      )
-  );
-
-  private final XaTransactionTemplate xaTransactionTemplate = new XaTransactionTemplate(
-      CFG.authJdbcUrl(),
-      CFG.userdataJdbcUrl()
-  );
-
-  public UserJson createUser(UserJson user) {
-    return xaTransactionTemplate.execute(() -> {
-          AuthUserEntity authUser = new AuthUserEntity();
-          authUser.setUsername(user.username());
-          authUser.setPassword(pe.encode("12345"));
-          authUser.setEnabled(true);
-          authUser.setAccountNonExpired(true);
-          authUser.setAccountNonLocked(true);
-          authUser.setCredentialsNonExpired(true);
-          authUser.setAuthorities(
-              Arrays.stream(Authority.values()).map(
-                  e -> {
-                    AuthorityEntity ae = new AuthorityEntity();
-                    ae.setUser(authUser);
-                    ae.setAuthority(e);
-                    return ae;
-                  }
-              ).toList()
-          );
-          authUserRepository.create(authUser);
-          return UserJson.fromEntity(
-              udUserDao.create(UserEntity.fromJson(user)),
-              null
-          );
-        }
+    private final TransactionTemplate txTemplate = new TransactionTemplate(
+            new JdbcTransactionManager(
+                    DataSources.dataSource(CFG.authJdbcUrl())
+            )
     );
-  }
 
-    public void deleteUser(UserJson user) {
+    private final XaTransactionTemplate xaTransactionTemplate = new XaTransactionTemplate(
+            CFG.authJdbcUrl(),
+            CFG.userdataJdbcUrl()
+    );
+
+    public UserJson createUser(UserJson user) {
+        return xaTransactionTemplate.execute(() -> {
+                    AuthUserEntity authUser = new AuthUserEntity();
+                    authUser.setUsername(user.username());
+                    authUser.setPassword(pe.encode("12345"));
+                    authUser.setEnabled(true);
+                    authUser.setAccountNonExpired(true);
+                    authUser.setAccountNonLocked(true);
+                    authUser.setCredentialsNonExpired(true);
+                    authUser.setAuthorities(
+                            Arrays.stream(Authority.values()).map(
+                                    e -> {
+                                        AuthorityEntity ae = new AuthorityEntity();
+                                        ae.setUser(authUser);
+                                        ae.setAuthority(e);
+                                        return ae;
+                                    }
+                            ).toList()
+                    );
+                    authUserRepository.create(authUser);
+                    return UserJson.fromEntity(
+                            udUserDao.create(UserEntity.fromJson(user)),
+                            null
+                    );
+                }
+        );
+    }
+
+/*    public void deleteUser(UserJson user) {
         UserEntity userEntity = UserEntity.fromJson(user);
         Optional<AuthUserEntity> authUserEntity = authUserDao.findByUsername(userEntity.getUsername());
         xaTransactionTemplate.execute(() -> {
@@ -85,5 +83,5 @@ public class UsersDbClient {
             udUserDao.delete(userEntity);
             return null;
         });
-    }
+    }*/
 }

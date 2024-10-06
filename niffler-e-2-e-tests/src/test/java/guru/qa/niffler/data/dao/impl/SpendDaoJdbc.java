@@ -19,66 +19,66 @@ import static guru.qa.niffler.data.tpl.Connections.holder;
 
 public class SpendDaoJdbc implements SpendDao {
 
-  private static final Config CFG = Config.getInstance();
-  private final String url = CFG.spendJdbcUrl();
+    private static final Config CFG = Config.getInstance();
+    private final String url = CFG.spendJdbcUrl();
 
-  @Override
-  public SpendEntity create(SpendEntity spend) {
-    try (PreparedStatement ps = holder(url).connection().prepareStatement(
-        "INSERT INTO spend (username, spend_date, currency, amount, description, category_id) " +
-            "VALUES ( ?, ?, ?, ?, ?, ?)",
-        Statement.RETURN_GENERATED_KEYS
-    )) {
-      ps.setString(1, spend.getUsername());
-      ps.setDate(2, new java.sql.Date(spend.getSpendDate().getTime()));
-      ps.setString(3, spend.getCurrency().name());
-      ps.setDouble(4, spend.getAmount());
-      ps.setString(5, spend.getDescription());
-      ps.setObject(6, spend.getCategory().getId());
+    @Override
+    public SpendEntity create(SpendEntity spend) {
+        try (PreparedStatement ps = holder(url).connection().prepareStatement(
+                "INSERT INTO spend (username, spend_date, currency, amount, description, category_id) " +
+                        "VALUES ( ?, ?, ?, ?, ?, ?)",
+                Statement.RETURN_GENERATED_KEYS
+        )) {
+            ps.setString(1, spend.getUsername());
+            ps.setDate(2, new java.sql.Date(spend.getSpendDate().getTime()));
+            ps.setString(3, spend.getCurrency().name());
+            ps.setDouble(4, spend.getAmount());
+            ps.setString(5, spend.getDescription());
+            ps.setObject(6, spend.getCategory().getId());
 
-      ps.executeUpdate();
+            ps.executeUpdate();
 
-      final UUID generatedKey;
-      try (ResultSet rs = ps.getGeneratedKeys()) {
-        if (rs.next()) {
-          generatedKey = rs.getObject("id", UUID.class);
-        } else {
-          throw new SQLException("Can`t find id in ResultSet");
+            final UUID generatedKey;
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    generatedKey = rs.getObject("id", UUID.class);
+                } else {
+                    throw new SQLException("Can`t find id in ResultSet");
+                }
+            }
+            spend.setId(generatedKey);
+            return spend;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
-      }
-      spend.setId(generatedKey);
-      return spend;
-    } catch (SQLException e) {
-      throw new RuntimeException(e);
     }
-  }
 
-  @Override
-  public List<SpendEntity> findAll() {
-    try (PreparedStatement ps = holder(url).connection().prepareStatement(
-        "SELECT * FROM spend")) {
-      ps.execute();
-      List<SpendEntity> result = new ArrayList<>();
-      try (ResultSet rs = ps.getResultSet()) {
-        while (rs.next()) {
-          SpendEntity se = new SpendEntity();
-          se.setId(rs.getObject("id", UUID.class));
-          se.setUsername(rs.getString("username"));
-          se.setSpendDate(rs.getDate("spend_date"));
-          se.setCurrency(CurrencyValues.valueOf(rs.getString("currency")));
-          se.setAmount(rs.getDouble("amount"));
-          se.setDescription(rs.getString("description"));
-          CategoryEntity category = new CategoryEntity();
-          category.setId(rs.getObject("category_id", UUID.class));
-          se.setCategory(category);
-          result.add(se);
+    @Override
+    public List<SpendEntity> findAll() {
+        try (PreparedStatement ps = holder(url).connection().prepareStatement(
+                "SELECT * FROM spend")) {
+            ps.execute();
+            List<SpendEntity> result = new ArrayList<>();
+            try (ResultSet rs = ps.getResultSet()) {
+                while (rs.next()) {
+                    SpendEntity se = new SpendEntity();
+                    se.setId(rs.getObject("id", UUID.class));
+                    se.setUsername(rs.getString("username"));
+                    se.setSpendDate(rs.getDate("spend_date"));
+                    se.setCurrency(CurrencyValues.valueOf(rs.getString("currency")));
+                    se.setAmount(rs.getDouble("amount"));
+                    se.setDescription(rs.getString("description"));
+                    CategoryEntity category = new CategoryEntity();
+                    category.setId(rs.getObject("category_id", UUID.class));
+                    se.setCategory(category);
+                    result.add(se);
+                }
+            }
+            return result;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
-      }
-      return result;
-    } catch (SQLException e) {
-      throw new RuntimeException(e);
     }
-  }
 
     @Override
     public Optional<SpendEntity> findSpendById(UUID id) {
@@ -96,7 +96,9 @@ public class SpendDaoJdbc implements SpendDao {
                     se.setCurrency(CurrencyValues.valueOf(rs.getString("currency")));
                     se.setAmount(rs.getDouble("amount"));
                     se.setDescription(rs.getString("description"));
-                    se.setCategory(categoryDao.findCategoryById((UUID) rs.getObject("category_id")).get());
+                    CategoryEntity category = new CategoryEntity();
+                    category.setId(rs.getObject("category_id", UUID.class));
+                    se.setCategory(category);
                     return Optional.of(se);
                 } else {
                     return Optional.empty();
@@ -124,7 +126,9 @@ public class SpendDaoJdbc implements SpendDao {
                     se.setCurrency(CurrencyValues.valueOf(rs.getString("currency")));
                     se.setAmount(rs.getDouble("amount"));
                     se.setDescription(rs.getString("description"));
-                    se.setCategory(categoryDao.findCategoryById((UUID) rs.getObject("category_id")).get());
+                    CategoryEntity category = new CategoryEntity();
+                    category.setId(rs.getObject("category_id", UUID.class));
+                    se.setCategory(category);
                     spendList.add(se);
                 }
                 return spendList;
