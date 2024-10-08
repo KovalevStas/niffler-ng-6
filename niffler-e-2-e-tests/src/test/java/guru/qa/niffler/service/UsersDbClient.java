@@ -1,15 +1,19 @@
 package guru.qa.niffler.service;
 
 import guru.qa.niffler.config.Config;
+import guru.qa.niffler.data.dao.FriendshipDao;
 import guru.qa.niffler.data.dao.UdUserDao;
+import guru.qa.niffler.data.dao.impl.FriendshipDaoSpringJdbc;
 import guru.qa.niffler.data.dao.impl.UdUserDaoSpringJdbc;
 import guru.qa.niffler.data.entity.auth.AuthUserEntity;
 import guru.qa.niffler.data.entity.auth.Authority;
 import guru.qa.niffler.data.entity.auth.AuthorityEntity;
+import guru.qa.niffler.data.entity.userdata.FriendshipStatus;
 import guru.qa.niffler.data.entity.userdata.UserEntity;
 import guru.qa.niffler.data.repository.AuthUserRepository;
 import guru.qa.niffler.data.repository.impl.AuthUserRepositoryJdbc;
 import guru.qa.niffler.data.tpl.DataSources;
+import guru.qa.niffler.data.tpl.JdbcTransactionTemplate;
 import guru.qa.niffler.data.tpl.XaTransactionTemplate;
 import guru.qa.niffler.model.UserJson;
 import org.springframework.jdbc.support.JdbcTransactionManager;
@@ -27,11 +31,15 @@ public class UsersDbClient {
 
     private final AuthUserRepository authUserRepository = new AuthUserRepositoryJdbc();
     private final UdUserDao udUserDao = new UdUserDaoSpringJdbc();
+    private final FriendshipDao friendshipDao = new FriendshipDaoSpringJdbc();
 
     private final TransactionTemplate txTemplate = new TransactionTemplate(
             new JdbcTransactionManager(
                     DataSources.dataSource(CFG.authJdbcUrl())
             )
+    );
+    private final JdbcTransactionTemplate txTemplateUd = new JdbcTransactionTemplate(
+            CFG.userdataJdbcUrl()
     );
 
     private final XaTransactionTemplate xaTransactionTemplate = new XaTransactionTemplate(
@@ -65,6 +73,18 @@ public class UsersDbClient {
                     );
                 }
         );
+    }
+
+    public void sendInviteToFriend(UserEntity requester, UserEntity addressee, FriendshipStatus status) {
+        friendshipDao.create(requester, addressee, status);
+    }
+
+    public boolean addToFriend(UserEntity user1, UserEntity user2) {
+        return xaTransactionTemplate.execute(() -> {
+            friendshipDao.create(user1, user2, FriendshipStatus.ACCEPTED);
+            friendshipDao.create(user2, user1, FriendshipStatus.ACCEPTED);
+            return true;
+        });
     }
 
 /*    public void deleteUser(UserJson user) {
