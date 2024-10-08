@@ -13,7 +13,7 @@ import java.util.Date;
 public class JdbcTest {
 
     @Test
-    void txTest() {
+    void createSpendTest() {
         SpendDbClient spendDbClient = new SpendDbClient();
 
         SpendJson spend = spendDbClient.createSpend(
@@ -38,7 +38,14 @@ public class JdbcTest {
     }
 
     @Test
-    void springJdbcTest() {
+    void createCategoryTest() {
+        SpendDbClient spendDbClient = new SpendDbClient();
+        CategoryJson category = spendDbClient.createCategory(new CategoryJson(null, "new category", "duck", false));
+        spendDbClient.deleteCategory(category);
+    }
+
+    @Test
+    void jdbcTest() {
         UsersDbClient usersDbClient = new UsersDbClient();
         UserJson user = usersDbClient.createUser(
                 new UserJson(
@@ -57,12 +64,12 @@ public class JdbcTest {
     }
 
     @Test
-    void chainedCreateTest() {
+    void springJdbcTest() {
         UsersDbClient usersDbClient = new UsersDbClient();
-        UserJson user = usersDbClient.createUser(
+        UserJson user = usersDbClient.createUserSpring(
                 new UserJson(
                         null,
-                        "valentin-11",
+                        "valentin-15",
                         null,
                         null,
                         null,
@@ -72,15 +79,33 @@ public class JdbcTest {
                         null
                 )
         );
-        usersDbClient.deleteUser(user);
+        usersDbClient.deleteUserSpring(user);
     }
 
     @Test
-    void name() {
+    void chainedCreateTest() {
+        UsersDbClient usersDbClient = new UsersDbClient();
+        UserJson user = usersDbClient.chainedCreateUser(
+                new UserJson(
+                        null,
+                        "valentin-12",
+                        null,
+                        null,
+                        null,
+                        CurrencyValues.RUB,
+                        null,
+                        null,
+                        null
+                )
+        );
+    }
+
+    @Test
+    void deleteUserTest() {
         UsersDbClient usersDbClient = new UsersDbClient();
         usersDbClient.deleteUser(new UserJson(
                 null,
-                "valentin-7",
+                "valentin-11",
                 null,
                 null,
                 null,
