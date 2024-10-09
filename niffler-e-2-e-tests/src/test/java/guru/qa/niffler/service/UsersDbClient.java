@@ -2,16 +2,16 @@ package guru.qa.niffler.service;
 
 import guru.qa.niffler.config.Config;
 import guru.qa.niffler.data.dao.FriendshipDao;
-import guru.qa.niffler.data.dao.UdUserDao;
 import guru.qa.niffler.data.dao.impl.FriendshipDaoSpringJdbc;
-import guru.qa.niffler.data.dao.impl.UdUserDaoSpringJdbc;
 import guru.qa.niffler.data.entity.auth.AuthUserEntity;
 import guru.qa.niffler.data.entity.auth.Authority;
 import guru.qa.niffler.data.entity.auth.AuthorityEntity;
 import guru.qa.niffler.data.entity.userdata.FriendshipStatus;
 import guru.qa.niffler.data.entity.userdata.UserEntity;
 import guru.qa.niffler.data.repository.AuthUserRepository;
+import guru.qa.niffler.data.repository.UserdatabaseRepository;
 import guru.qa.niffler.data.repository.impl.AuthUserRepositoryJdbc;
+import guru.qa.niffler.data.repository.impl.UserdatabaseRepositoryJdbc;
 import guru.qa.niffler.data.tpl.DataSources;
 import guru.qa.niffler.data.tpl.JdbcTransactionTemplate;
 import guru.qa.niffler.data.tpl.XaTransactionTemplate;
@@ -30,7 +30,7 @@ public class UsersDbClient {
     private static final PasswordEncoder pe = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
     private final AuthUserRepository authUserRepository = new AuthUserRepositoryJdbc();
-    private final UdUserDao udUserDao = new UdUserDaoSpringJdbc();
+    private final UserdatabaseRepository userdatabaseRepository = new UserdatabaseRepositoryJdbc();
     private final FriendshipDao friendshipDao = new FriendshipDaoSpringJdbc();
 
     private final TransactionTemplate txTemplate = new TransactionTemplate(
@@ -68,7 +68,7 @@ public class UsersDbClient {
                     );
                     authUserRepository.create(authUser);
                     return UserJson.fromEntity(
-                            udUserDao.create(UserEntity.fromJson(user)),
+                            userdatabaseRepository.create(UserEntity.fromJson(user)),
                             null
                     );
                 }
