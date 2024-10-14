@@ -5,58 +5,77 @@ import guru.qa.niffler.jupiter.annotation.User;
 import guru.qa.niffler.model.CategoryJson;
 import guru.qa.niffler.model.CurrencyValues;
 import guru.qa.niffler.model.SpendJson;
+import guru.qa.niffler.model.UserJson;
+import guru.qa.niffler.service.SpendClient;
 import guru.qa.niffler.service.SpendDbClient;
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.platform.commons.support.AnnotationSupport;
 
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.Optional;
+import java.util.List;
 
 public class SpendingExtension implements BeforeEachCallback, ParameterResolver {
 
-    public static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(SpendingExtension.class);
-    private final SpendDbClient spendDbClient = new SpendDbClient();
+  public static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(SpendingExtension.class);
 
-    @Override
-    public void beforeEach(ExtensionContext context) throws Exception {
-        AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), User.class)
-                .ifPresent(userAnno -> {
-                    if (ArrayUtils.isNotEmpty(userAnno.spendings())) {
-                        Spending spendAnno = userAnno.spendings()[0];
-                        CategoryJson category = new CategoryJson(
-                                null,
-                                spendAnno.category(),
-                                userAnno.username(),
-                                false
-                        );
-                        Optional<CategoryJson> optionalCategoryJson = spendDbClient.getCategoryByUsernameAndCategoryName(category);
-                        if (optionalCategoryJson.isPresent())
-                            category = optionalCategoryJson.get();
-                        SpendJson spend = new SpendJson(
-                                null,
-                                new Date(),
-                                category,
-                                CurrencyValues.RUB,
-                                spendAnno.amount(),
-                                spendAnno.description(),
-                                userAnno.username()
-                        );
-                        context.getStore(NAMESPACE).put(
-                                context.getUniqueId(),
-                                spendDbClient.createSpend(spend)
-                        );
-                    }
-                });
-    }
+  private final SpendClient spendClient = new SpendDbClient();
 
-    @Override
-    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-        return parameterContext.getParameter().getType().isAssignableFrom(SpendJson.class);
-    }
+  @Override
+  public void beforeEach(ExtensionContext context) throws Exception {
+    AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), User.class)
+        .ifPresent(userAnno -> {
+          if (ArrayUtils.isNotEmpty(userAnno.spendings())) {
+            List<SpendJson> result = new ArrayList<>();
+            UserJson user = context.getStore(UserExtension.NAMESPACE)
+                .get(context.getUniqueId(), UserJson.class);
 
-    @Override
-    public SpendJson resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-        return extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), SpendJson.class);
-    }
+            for (Spending spendAnno : userAnno.spendings()) {
+              SpendJson spend = new SpendJson(
+                  null,
+                  new Date(),
+                  new CategoryJson(
+                      null,
+                      spendAnno.category(),
+                      user != null ? user.username() : userAnno.username(),
+                      false
+                  ),
+                  CurrencyValues.RUB,
+                  spendAnno.amount(),
+                  spendAnno.description(),
+                  user != null ? user.username() : userAnno.username()
+              );
+
+              SpendJson createdSpend = spendClient.createSpend(spend);
+              result.add(createdSpend);
+            }
+
+
+            if (user != null) {
+              user.testData().spendings().addAll(result);
+            } else {
+              context.getStore(NAMESPACE).put(
+                  context.getUniqueId(),
+                  result
+              );
+            }
+          }
+        });
+  }
+
+  @Override
+  public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+    return parameterContext.getParameter().getType().isAssignableFrom(SpendJson[].class);
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public SpendJson[] resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+    return (SpendJson[]) extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), List.class).toArray();
+  }
 }
