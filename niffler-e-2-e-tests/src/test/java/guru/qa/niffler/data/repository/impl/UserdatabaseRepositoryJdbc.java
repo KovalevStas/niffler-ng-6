@@ -74,10 +74,17 @@ public class UserdatabaseRepositoryJdbc implements UserdatabaseRepository {
     public Optional<UserEntity> findById(UUID id) {
         try (PreparedStatement ps = holder(CFG.userdataJdbcUrl()).connection().prepareStatement(
                 "select * from \"user\" u join friendship f " +
-                        "on u.id = f.requester_id or u.id = f.addressee_id " +
-                        "where u.id = ?"
-        )) {
+                        "on u.id = f.requester_id " +
+                        "or u.id = f.addressee_id " +
+                        "where u.id = ? and ((f.requester_id = ? and f.status = 'ACCEPTED')" +
+                        "or (f.addressee_id = ? and f.status = 'PENDING'))"
+        );
+             PreparedStatement usr = holder(CFG.userdataJdbcUrl()).connection().prepareStatement(
+                     "select * from \"user\" u where u.id = ?"
+             )) {
             ps.setObject(1, id);
+            ps.setObject(2, id);
+            ps.setObject(3, id);
 
             ps.execute();
 
@@ -89,38 +96,128 @@ public class UserdatabaseRepositoryJdbc implements UserdatabaseRepository {
                     if (user == null) {
                         user = UdUserEntityRowMapper.instance.mapRow(rs, 1);
                     }
-
-                    /*FriendshipEntity ae = new FriendshipEntity();
-                    ae.setAddressee(rs.getObject("requester_id", UUID.class));
-                    ae.setId(rs.getObject("a.id", UUID.class));
-                    ae.setAuthority(Authority.valueOf(rs.getString("authority")));
-                    authorityEntities.add(ae);*/
+                    if ("PENDING".equals(rs.getString("status"))) {
+                        usr.setObject(1, UUID.fromString(rs.getString("requester_id")));
+                        usr.execute();
+                        try (ResultSet usr_res = usr.getResultSet()) {
+                            UserEntity friend = null;
+                            FriendshipEntity ae = new FriendshipEntity();
+                            while (usr_res.next()) {
+                                if (friend == null) {
+                                    friend = UdUserEntityRowMapper.instance.mapRow(usr_res, 1);
+                                }
+                            }
+                            ae.setRequester(friend);
+                            ae.setAddressee(user);
+                            ae.setStatus(FriendshipStatus.valueOf("PENDING"));
+                            ae.setCreatedDate(rs.getDate("created_date"));
+                            friendshipAddressees.add(ae);
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    if ("ACCEPTED".equals(rs.getString("status"))) {
+                        usr.setObject(1, UUID.fromString(rs.getString("addressee_id")));
+                        usr.execute();
+                        try (ResultSet usr_res = usr.getResultSet()) {
+                            UserEntity friend = null;
+                            FriendshipEntity ae = new FriendshipEntity();
+                            while (usr_res.next()) {
+                                if (friend == null) {
+                                    friend = UdUserEntityRowMapper.instance.mapRow(usr_res, 1);
+                                }
+                            }
+                            ae.setRequester(user);
+                            ae.setAddressee(friend);
+                            ae.setStatus(FriendshipStatus.valueOf("ACCEPTED"));
+                            ae.setCreatedDate(rs.getDate("created_date"));
+                            friendshipRequests.add(ae);
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
                 }
-               /* if (user == null) {
+                if (user == null) {
                     return Optional.empty();
                 } else {
-                    user.setAuthorities(authorityEntities);
+                    user.setFriendshipAddressees(friendshipAddressees);
+                    user.setFriendshipRequests(friendshipRequests);
                     return Optional.of(user);
-                }*/
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return Optional.empty();
     }
 
     @Override
     public void createFriendship(UserEntity requester, UserEntity addressee, FriendshipStatus status) {
-
+        try (PreparedStatement friendship = holder(CFG.userdataJdbcUrl()).connection().prepareStatement(
+                "INSERT INTO \"friendship\" (requester_id, addressee_id, status) VALUES (? , ?, ?)")) {
+            friendship.setObject(1, requester.getId());
+            friendship.setObject(2, addressee.getId());
+            friendship.setString(3, String.valueOf(status));
+            friendship.addBatch();
+            friendship.clearParameters();
+            if ("ACCEPTED".equals(String.valueOf(status))) {
+                friendship.setObject(1, addressee.getId());
+                friendship.setObject(2, requester.getId());
+                friendship.setString(3, String.valueOf(status));
+                friendship.addBatch();
+                friendship.clearParameters();
+            }
+            friendship.executeBatch();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public List<FriendshipEntity> findAll() {
-        return List.of();
-    }
-
-    @Override
-    public void delete(UserEntity user) {
-
+        List<FriendshipEntity> friendshipList = new ArrayList<>();
+        try (PreparedStatement friendship = holder(CFG.userdataJdbcUrl()).connection().prepareStatement(
+                "SELECT * from \"friendship\"");
+             PreparedStatement usr = holder(CFG.userdataJdbcUrl()).connection().prepareStatement(
+                     "select * from \"user\" u where u.id = ?"
+             )) {
+            friendship.execute();
+            try (ResultSet rs = friendship.getResultSet()) {
+                while (rs.next()) {
+                    UserEntity requester = null;
+                    UserEntity addressee = null;
+                    FriendshipEntity friendshipEntity = new FriendshipEntity();
+                    usr.setObject(1, UUID.fromString(rs.getString("requester_id")));
+                    usr.execute();
+                    try (ResultSet usr_res = usr.getResultSet()) {
+                        while (usr_res.next()) {
+                            if (requester == null) {
+                                requester = UdUserEntityRowMapper.instance.mapRow(usr_res, 1);
+                            }
+                        }
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                    usr.setObject(1, UUID.fromString(rs.getString("addressee_id")));
+                    usr.execute();
+                    try (ResultSet usr_res = usr.getResultSet()) {
+                        while (usr_res.next()) {
+                            if (addressee == null) {
+                                addressee = UdUserEntityRowMapper.instance.mapRow(usr_res, 1);
+                            }
+                        }
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                    friendshipEntity.setRequester(requester);
+                    friendshipEntity.setAddressee(addressee);
+                    friendshipEntity.setStatus(FriendshipStatus.valueOf(rs.getString("status")));
+                    friendshipEntity.setCreatedDate(rs.getDate("created_date"));
+                    friendshipList.add(friendshipEntity);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return friendshipList;
     }
 }

@@ -17,6 +17,4 @@ public interface UserdatabaseRepository {
     void createFriendship(UserEntity requester, UserEntity addressee, FriendshipStatus status);
 
     List<FriendshipEntity> findAll();
-
-    void delete(UserEntity user);
 }

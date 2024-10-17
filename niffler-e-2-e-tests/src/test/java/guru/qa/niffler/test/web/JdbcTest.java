@@ -1,7 +1,9 @@
 package guru.qa.niffler.test.web;
 
+import guru.qa.niffler.data.entity.userdata.FriendshipEntity;
 import guru.qa.niffler.data.entity.userdata.FriendshipStatus;
 import guru.qa.niffler.data.entity.userdata.UserEntity;
+import guru.qa.niffler.data.repository.impl.UserdatabaseRepositoryJdbc;
 import guru.qa.niffler.model.CategoryJson;
 import guru.qa.niffler.model.CurrencyValues;
 import guru.qa.niffler.model.SpendJson;
@@ -11,6 +13,8 @@ import guru.qa.niffler.service.UsersDbClient;
 import org.junit.jupiter.api.Test;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class JdbcTest {
@@ -82,5 +86,32 @@ public class JdbcTest {
         addr.setUsername("barsik");
         usersDbClient.addToFriend(addr, req);
         System.out.println("111");
+    }
+
+    @Test
+    void findByIdUser() {
+        UserdatabaseRepositoryJdbc udbc = new UserdatabaseRepositoryJdbc();
+        Optional<UserEntity> user = udbc.findById(UUID.fromString("4405500a-7601-420d-aa24-2f3fb62c1f5d"));
+        System.out.println("");
+    }
+
+    @Test
+    void createFriendshipTest() {
+        UserdatabaseRepositoryJdbc udbc = new UserdatabaseRepositoryJdbc();
+        UserEntity req = new UserEntity();
+        req.setUsername("barsik");
+        req.setId(UUID.fromString("4405500a-7601-420d-aa24-2f3fb62c1f5d"));
+        UserEntity addr = new UserEntity();
+        addr.setId(UUID.fromString("81b2667e-7525-4bd6-b968-be2c22335955"));
+        addr.setUsername("stas");
+        udbc.createFriendship(req, addr, FriendshipStatus.ACCEPTED);
+        System.out.println("111");
+    }
+
+    @Test
+    void findAllFriendship() {
+        UserdatabaseRepositoryJdbc udbc = new UserdatabaseRepositoryJdbc();
+        List<FriendshipEntity> ls = udbc.findAll();
+        System.out.println("");
     }
 }
