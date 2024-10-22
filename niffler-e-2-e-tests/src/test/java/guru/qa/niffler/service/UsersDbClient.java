@@ -66,7 +66,7 @@ public class UsersDbClient {
                             AuthUserEntity authUser = authUserEntity(username, "12345");
                             authUserRepository.create(authUser);
                             UserEntity adressee = userdataUserRepository.create(userEntity(username));
-                            userdataUserRepository.addIncomeInvitation(targetEntity, adressee);
+                            userdataUserRepository.sendInvitation(targetEntity, adressee);
                             return null;
                         }
                 );
@@ -86,7 +86,7 @@ public class UsersDbClient {
                             AuthUserEntity authUser = authUserEntity(username, "12345");
                             authUserRepository.create(authUser);
                             UserEntity adressee = userdataUserRepository.create(userEntity(username));
-                            userdataUserRepository.addOutcomeInvitation(targetEntity, adressee);
+                            userdataUserRepository.sendInvitation(adressee, targetEntity);
                             return null;
                         }
                 );
@@ -95,7 +95,23 @@ public class UsersDbClient {
     }
 
     void addFriend(UserJson targetUser, int count) {
+        if (count > 0) {
+            UserEntity targetEntity = userdataUserRepository.findById(
+                    targetUser.id()
+            ).orElseThrow();
 
+            for (int i = 0; i < count; i++) {
+                xaTransactionTemplate.execute(() -> {
+                            String username = randomUsername();
+                            AuthUserEntity authUser = authUserEntity(username, "12345");
+                            authUserRepository.create(authUser);
+                            UserEntity adressee = userdataUserRepository.create(userEntity(username));
+                            userdataUserRepository.addFriend(targetEntity, adressee);
+                            return null;
+                        }
+                );
+            }
+        }
     }
 
     private UserEntity userEntity(String username) {
@@ -125,22 +141,4 @@ public class UsersDbClient {
         );
         return authUser;
     }
-
-  /*    public void deleteUser(UserJson user) {
-        UserEntity userEntity = UserEntity.fromJson(user);
-        Optional<AuthUserEntity> authUserEntity = authUserDao.findByUsername(userEntity.getUsername());
-        xaTransactionTemplate.execute(() -> {
-            if (authUserEntity.isPresent()) {
-                List<AuthorityEntity> authorityList = authAuthorityDao.findAll(String.valueOf(authUserEntity.get().getId()));
-                if (!authorityList.isEmpty())
-                    for (AuthorityEntity authority : authorityList) {
-                        authAuthorityDao.delete(authority);
-                    }
-                authUserDao.delete(authUserEntity.get());
-            }
-            userEntity.setUsername(null);
-            udUserDao.delete(userEntity);
-            return null;
-        });
-    }*/
 }
