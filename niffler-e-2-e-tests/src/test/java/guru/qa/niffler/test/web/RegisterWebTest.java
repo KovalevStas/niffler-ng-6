@@ -13,18 +13,18 @@ public class RegisterWebTest {
     @Test
     void registerWithShortPassword() {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
-                .goToRegisterPage()
+                .doRegister()
                 .fillRegisterPage("bee", "12", "12")
                 .submit()
-                .assertPasswordErrorShow("Allowed password length should be from 3 to 12 characters")
-                .assertPasswordSubmitErrorShow("Allowed password length should be from 3 to 12 characters");
+                .checkAlertMessage("Allowed password length should be from 3 to 12 characters")
+                .checkAlertMessage("Allowed password length should be from 3 to 12 characters");
     }
 
     @Test
     void shouldRegisterNewUser() {
         String username = RandomDataUtils.randomUsername();
         Selenide.open(CFG.frontUrl(), LoginPage.class)
-                .goToRegisterPage()
+                .doRegister()
                 .fillRegisterPage(username, "123", "123")
                 .successSubmit();
     }
@@ -33,21 +33,21 @@ public class RegisterWebTest {
     void shouldNotRegisterUserWithExistingUsername() {
         String username = RandomDataUtils.randomUsername();
         Selenide.open(CFG.frontUrl(), LoginPage.class)
-                .goToRegisterPage()
+                .doRegister()
                 .fillRegisterPage(username, "123", "123")
                 .successSubmit()
-                .goToRegisterPage()
+                .doRegister()
                 .fillRegisterPage(username, "1234", "1234")
                 .submit()
-                .assertLoginErrorShow("Username `" + username + "` already exists");
+                .checkAlertMessage("Username `" + username + "` already exists");
     }
 
     @Test
     void shouldShowErrorIfPasswordAndConfirmPasswordAreNotEqual() {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
-                .goToRegisterPage()
+                .doRegister()
                 .fillRegisterPage(RandomDataUtils.randomUsername(), "123", "1234")
                 .submit()
-                .assertPasswordErrorShow("Passwords should be equal");
+                .checkAlertMessage("Passwords should be equal");
     }
 }

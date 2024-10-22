@@ -13,7 +13,7 @@ public class LoginWebTest {
     void mainPageShouldBeDisplayedAfterSuccessLogin() {
         String username = RandomDataUtils.randomUsername();
         Selenide.open(CFG.frontUrl(), LoginPage.class)
-                .goToRegisterPage()
+                .doRegister()
                 .fillRegisterPage(username, "123", "123")
                 .successSubmit()
                 .successLogin(username, "123")
@@ -25,8 +25,8 @@ public class LoginWebTest {
     void userShouldStayOnLoginPageAfterLoginWithBadCredentials() {
         String username = RandomDataUtils.randomUsername();
         Selenide.open(CFG.frontUrl(), LoginPage.class)
-                .goToRegisterPage()
+                .doRegister()
                 .fillRegisterPage(username, "123", "123").successSubmit().login(username, "1234");
-        new LoginPage().assertLoginErrorShow("Неверные учетные данные пользователя");
+        new LoginPage().checkError("Неверные учетные данные пользователя");
     }
 }

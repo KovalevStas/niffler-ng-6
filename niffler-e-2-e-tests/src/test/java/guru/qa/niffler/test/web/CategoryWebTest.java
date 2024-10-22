@@ -25,7 +25,7 @@ public class CategoryWebTest {
                 .successLogin("duck", "12345")
                 .goToProfile()
                 .clickShowArchivedBtn()
-                .IsCategoryCreated(category.name());
+                .checkCategoryExists(category.name());
     }
 
     @User(
@@ -37,7 +37,7 @@ public class CategoryWebTest {
         Selenide.open(CFG.frontUrl(), LoginPage.class)
                 .successLogin("duck", "12345")
                 .goToProfile()
-                .IsCategoryCreated(category.name());
+                .checkCategoryExists(category.name());
     }
 }
 

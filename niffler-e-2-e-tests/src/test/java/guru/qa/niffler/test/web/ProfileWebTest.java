@@ -17,9 +17,9 @@ public class ProfileWebTest {
         Configuration.browserSize = "1900x1600";
         String categoryName = RandomDataUtils.randomCategoryName();
         Selenide.open(CFG.frontUrl(), LoginPage.class)
-                .successLogin("duck", "12345").goToProfile().createCategory(categoryName);
+                .successLogin("duck", "12345").goToProfile().addCategory(categoryName);
         ProfilePage profilePage = new ProfilePage();
-        profilePage.IsCategoryCreated(categoryName);
+        profilePage.checkCategoryExists(categoryName);
         profilePage.archiveCategory(categoryName);
     }
 
@@ -27,10 +27,10 @@ public class ProfileWebTest {
     void archiveCategoryTest() {
         String categoryName = RandomDataUtils.randomCategoryName();
         Selenide.open(CFG.frontUrl(), LoginPage.class)
-                .successLogin("duck", "12345").goToProfile().createCategory(categoryName);
+                .successLogin("duck", "12345").goToProfile().addCategory(categoryName);
         ProfilePage profilePage = new ProfilePage();
         profilePage.archiveCategory(categoryName);
         profilePage.clickShowArchivedBtn();
-        profilePage.IsCategoryCreated(categoryName);
+        profilePage.checkCategoryExists(categoryName);
     }
 }
